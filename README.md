@@ -35,5 +35,6 @@ The following table lists the parameters that can be configured.
 ## Example
 The example shows the simulation results of the ICCAD13 benchmark using a canvas size of $2048 \times 2048$ and a pixel size of 1.
 
-
-![example](.assert/example.png)
+<p align="center">
+  <img src=".assert/example.png" alt="example" />
+</p>
