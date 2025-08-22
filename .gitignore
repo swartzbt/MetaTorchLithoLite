@@ -164,3 +164,4 @@ opencv-*
 install
 *.png
 !example.png
+!torchlitho.png
