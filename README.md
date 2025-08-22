@@ -16,7 +16,7 @@ pip install -r requirements.txt
 Run the following command to install the project:
 
 ```sh
-pip install .
+python setup.py install
 ```
 ## Litho Simulation
 
