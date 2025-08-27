@@ -1,6 +1,7 @@
 <p align="center">
   <img src=".assert/torchlitho.png" alt="logo" />
 </p>
+
 # TorchLitho 2.0: Ultrafast Differentiable Lithography Simulation Engine
 
 TorchLitho 2.0 is a lightweight and user-friendly lithography simulation engine designed for full-chip scale mask optimization.
