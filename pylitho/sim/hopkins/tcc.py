@@ -1,6 +1,7 @@
 import pickle
 from typing import Union, List
 
+import cv2
 import numpy as np
 from sklearn.utils.extmath import randomized_svd
 
@@ -66,19 +67,98 @@ def genTCC(pixel : int,
            defocus : Union[None, List[int]] = None, 
            thresh : float =1.0e-6):
     refract = na / SINMAX
+    size = canvas//pixel
     if defocus is not None:
         phis, weights = [], []
         for d in defocus:
-            pupil = funcPupil(pixel, canvas, na, wavelength, defocus=d, refract=refract)
-            circ = srcPoint(pixel, canvas)
-            _phis, _weights = TCC(circ, pupil, pixel, canvas, thresh=thresh)
+            if size <= 128: 
+                pupil = funcPupil(pixel, canvas, na, wavelength, defocus=d, refract=refract)
+                circ = srcPoint(pixel, canvas)
+                _phis, _weights = TCC(circ, pupil, pixel, canvas, thresh=thresh)
+            else: 
+                tccpixel = pixel
+                tcccanvas = canvas
+                resize = 1
+                padding = 1
+                while tcccanvas//tccpixel > 128: 
+                    if tcccanvas > 2048: 
+                        tcccanvas //= 2
+                        resize *= 2
+                    else: 
+                        tccpixel *= 2
+                        padding *= 2
+                pupil = funcPupil(tccpixel, tcccanvas, na, wavelength, refract=refract)
+                circ = srcPoint(tccpixel, tcccanvas)
+                _phis, _weights = TCC(circ, pupil, tccpixel, tcccanvas, thresh=thresh)
+                tccsize = tcccanvas//tccpixel
+                for idx in range(len(_phis)): 
+                    padded = tccsize*padding
+                    ffted = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(_phis[idx])))
+                    realpart = np.zeros((padded, padded))
+                    imagpart = np.zeros((padded, padded))
+                    begin = (padded - tccsize) // 2
+                    end = begin + tccsize
+                    realpart[begin:end, begin:end] = ffted.real
+                    imagpart[begin:end, begin:end] = ffted.imag
+                    ffted = realpart + 1j * imagpart
+                    realfft = cv2.resize(ffted.real, (size, size), interpolation=cv2.INTER_LINEAR)
+                    imagfft = cv2.resize(ffted.imag, (size, size), interpolation=cv2.INTER_LINEAR)
+                    ffted = realfft + 1j * imagfft
+                    _phis[idx] = padding**2 * resize**2 * np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(ffted)))
+                    # iffted = padding**2 * np.fft.ifft2(np.fft.fftshift(ffted))
+                    # begin = (size - padded) // 2
+                    # end = begin + padded
+                    # realpart = np.zeros((size, size))
+                    # imagpart = np.zeros((size, size))
+                    # realpart[begin:end, begin:end] = iffted.real
+                    # imagpart[begin:end, begin:end] = iffted.imag
+                    # _phis[idx] = resize**2 * (realpart + 1j * imagpart)
             phis.append(_phis)
             weights.append(_weights)
         return phis, weights
     else:
-        pupil = funcPupil(pixel, canvas, na, wavelength, refract=refract)
-        circ = srcPoint(pixel, canvas)
-        phis, weights = TCC(circ, pupil, pixel, canvas, thresh=thresh)
+        if size <= 128: 
+            pupil = funcPupil(pixel, canvas, na, wavelength, refract=refract)
+            circ = srcPoint(pixel, canvas)
+            phis, weights = TCC(circ, pupil, pixel, canvas, thresh=thresh)
+        else: 
+            tccpixel = pixel
+            tcccanvas = canvas
+            resize = 1
+            padding = 1
+            while tcccanvas//tccpixel > 128: 
+                if tcccanvas > 2048: 
+                    tcccanvas //= 2
+                    resize *= 2
+                else: 
+                    tccpixel *= 2
+                    padding *= 2
+            pupil = funcPupil(tccpixel, tcccanvas, na, wavelength, refract=refract)
+            circ = srcPoint(tccpixel, tcccanvas)
+            phis, weights = TCC(circ, pupil, tccpixel, tcccanvas, thresh=thresh)
+            tccsize = tcccanvas//tccpixel
+            for idx in range(len(phis)): 
+                padded = tccsize*padding
+                ffted = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(phis[idx])))
+                realpart = np.zeros((padded, padded))
+                imagpart = np.zeros((padded, padded))
+                begin = (padded - tccsize) // 2
+                end = begin + tccsize
+                realpart[begin:end, begin:end] = ffted.real
+                imagpart[begin:end, begin:end] = ffted.imag
+                ffted = realpart + 1j * imagpart
+                realfft = cv2.resize(ffted.real, (size, size), interpolation=cv2.INTER_LINEAR)
+                imagfft = cv2.resize(ffted.imag, (size, size), interpolation=cv2.INTER_LINEAR)
+                ffted = realfft + 1j * imagfft
+                phis[idx] = padding**2 * resize**2 * np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(ffted)))
+                # iffted = padding**2 * np.fft.ifft2(np.fft.fftshift(ffted))
+                # begin = (size - padded) // 2
+                # end = begin + padded
+                # realpart = np.zeros((size, size))
+                # imagpart = np.zeros((size, size))
+                # realpart[begin:end, begin:end] = iffted.real
+                # imagpart[begin:end, begin:end] = iffted.imag
+                # phis[idx] = resize**2 * (realpart + 1j * imagpart)
         return phis, weights
 
 def readTccParaFromDisc(path : str):
@@ -89,3 +169,6 @@ def readTccParaFromDisc(path : str):
 def writeTccParaToDisc(phis, weights, path : str):
     with open(path, "wb") as fout:
         pickle.dump((phis, weights), fout)
+
+if __name__ == "__main__": 
+    genTCC(4, 512, 1.35, 193)
