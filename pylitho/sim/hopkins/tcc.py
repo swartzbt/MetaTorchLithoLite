@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.utils.extmath import randomized_svd
 
 SINMAX = 0.9375
+MAX_TCC_SIZE = 64
 
 def getFreqs(pixel, canvas): 
     size = round(canvas / pixel)
@@ -71,7 +72,7 @@ def genTCC(pixel : int,
     if defocus is not None:
         phis, weights = [], []
         for d in defocus:
-            if size <= 128: 
+            if size <= MAX_TCC_SIZE: 
                 pupil = funcPupil(pixel, canvas, na, wavelength, defocus=d, refract=refract)
                 circ = srcPoint(pixel, canvas)
                 _phis, _weights = TCC(circ, pupil, pixel, canvas, thresh=thresh)
@@ -80,7 +81,7 @@ def genTCC(pixel : int,
                 tcccanvas = canvas
                 resize = 1
                 padding = 1
-                while tcccanvas//tccpixel > 128: 
+                while tcccanvas//tccpixel > MAX_TCC_SIZE: 
                     if tcccanvas > 2048: 
                         tcccanvas //= 2
                         resize *= 2
@@ -105,19 +106,11 @@ def genTCC(pixel : int,
                     imagfft = cv2.resize(ffted.imag, (size, size), interpolation=cv2.INTER_LINEAR)
                     ffted = realfft + 1j * imagfft
                     _phis[idx] = padding**2 * resize**2 * np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(ffted)))
-                    # iffted = padding**2 * np.fft.ifft2(np.fft.fftshift(ffted))
-                    # begin = (size - padded) // 2
-                    # end = begin + padded
-                    # realpart = np.zeros((size, size))
-                    # imagpart = np.zeros((size, size))
-                    # realpart[begin:end, begin:end] = iffted.real
-                    # imagpart[begin:end, begin:end] = iffted.imag
-                    # _phis[idx] = resize**2 * (realpart + 1j * imagpart)
             phis.append(_phis)
             weights.append(_weights)
         return phis, weights
     else:
-        if size <= 128: 
+        if size <= MAX_TCC_SIZE: 
             pupil = funcPupil(pixel, canvas, na, wavelength, refract=refract)
             circ = srcPoint(pixel, canvas)
             phis, weights = TCC(circ, pupil, pixel, canvas, thresh=thresh)
@@ -126,7 +119,7 @@ def genTCC(pixel : int,
             tcccanvas = canvas
             resize = 1
             padding = 1
-            while tcccanvas//tccpixel > 128: 
+            while tcccanvas//tccpixel > MAX_TCC_SIZE: 
                 if tcccanvas > 2048: 
                     tcccanvas //= 2
                     resize *= 2
@@ -151,14 +144,6 @@ def genTCC(pixel : int,
                 imagfft = cv2.resize(ffted.imag, (size, size), interpolation=cv2.INTER_LINEAR)
                 ffted = realfft + 1j * imagfft
                 phis[idx] = padding**2 * resize**2 * np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(ffted)))
-                # iffted = padding**2 * np.fft.ifft2(np.fft.fftshift(ffted))
-                # begin = (size - padded) // 2
-                # end = begin + padded
-                # realpart = np.zeros((size, size))
-                # imagpart = np.zeros((size, size))
-                # realpart[begin:end, begin:end] = iffted.real
-                # imagpart[begin:end, begin:end] = iffted.imag
-                # phis[idx] = resize**2 * (realpart + 1j * imagpart)
         return phis, weights
 
 def readTccParaFromDisc(path : str):
