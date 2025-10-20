@@ -8,6 +8,7 @@ from .utils.interpolate import getInterpolateAerialImageNCHW
 from .utils.interpolate import getInterpolateAerialImageCHW
 from .utils.interpolate import getInterpolateAerialImage
 
+
 class Simulator(ABC):
     def __init__(self, 
                 canvas : int,
@@ -78,7 +79,8 @@ class Abbe(Simulator):
         elif image.dim() == 3:
             return getInterpolateAerialImageCHW(image, self.pixel)
         return getInterpolateAerialImageNCHW(image, self.pixel)
-        
+
+
 class Hopkins(Simulator):
     def __init__(self, 
                 canvas : int,

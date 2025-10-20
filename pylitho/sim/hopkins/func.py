@@ -8,10 +8,10 @@ import numpy as np
 
 class HopkinsFunc:
     def __init__(self, 
-                 tcc : List[np.ndarray] = None,
-                 defocus : bool = False, 
-                 device : torch.device = None,
-                 filename : str = None) -> None:
+                 tcc: List[np.ndarray] = None,
+                 defocus: bool = False,
+                 device: torch.device = None,
+                 filename: str = None) -> None:
         assert device is not None
         self.device = device
         self.defocus = defocus

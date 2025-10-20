@@ -1,3 +1,4 @@
+import os
 import sys
 sys.path.append(".")
 import math
@@ -5,13 +6,20 @@ import math
 import numpy as np 
 import cv2
 
+
+BENCHMARK_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "benchmark", "ICCAD2013")
+
+
 class Design: 
     def __init__(self, filename=None, down=1): 
+        if isinstance(filename, int):
+            filename = os.path.join(BENCHMARK_DIR, f'M1_test{filename:d}.glp')
+
         self._filename = filename
         self._polygons = []
         if filename is None: 
             return
-        with open(filename, "r") as fin: 
+        with open(filename, "r") as fin:
             lines = fin.readlines()
         for line in lines: 
             splited = line.strip().split()
@@ -184,7 +192,10 @@ class Design:
         
         return countCross   
 
-if __name__ == "__main__": 
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
     design = Design("../../benchmark/ICCAD2013/M1_test1.glp")
     img = design.mat()
     print(img)

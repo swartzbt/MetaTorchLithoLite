@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC
 from typing import List, Tuple, Union
 
+
 class Point:
     def __init__(self, x : int, y : int) -> None:
         self._x = x
@@ -42,7 +43,8 @@ class Point:
     def __sub__(self, shift):
         assert isinstance(shift, (List, Tuple)) and len(shift) == 2
         return Point(self.x() - shift[0], self.y() - shift[1])
-         
+
+
 class Line(ABC):
     directions = ["left", "right", "up", "down"]
     def __init__(self) -> None:
@@ -91,7 +93,8 @@ class VerticalLine(Line):
     
     def __str__(self) -> str:
         return f"{self.p1} T {self.p2}"
-    
+
+
 class HorizontalLine(Line):
     def __init__(self, p1 : Point, p2 : Point) -> None:
         assert p1.y() == p2.y(), f"Points need to have same index in y axis."
@@ -119,7 +122,8 @@ class HorizontalLine(Line):
 
     def __str__(self) -> str:
         return f"{self.p1} -> {self.p2}"
-    
+
+
 def autoLine(p1 : Point, p2 : Point):
     if p1.x() == p2.x():
         return VerticalLine(p1, p2)
@@ -127,6 +131,7 @@ def autoLine(p1 : Point, p2 : Point):
         return HorizontalLine(p1, p2)
     else:
         raise ValueError(f"Can't construct line between {p1} and {p2}")
+
 
 class BBox:
     def __init__(self, ll : Point, ur : Point) -> None:

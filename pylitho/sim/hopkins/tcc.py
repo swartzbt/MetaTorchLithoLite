@@ -5,11 +5,18 @@ import cv2
 import numpy as np
 from sklearn.utils.extmath import randomized_svd
 
-SINMAX = 0.9375
+SINMAX = 0.9375  # Don't know what this is
 MAX_TCC_SIZE = 64
 
-def getFreqs(pixel, canvas): 
-    size = round(canvas / pixel)
+
+def getFreqs(pixel, canvas):
+    """
+    Get the frequency space sample points that correspond to given spatial sampling pitch and extent.
+    :param pixel: size of 1 pixel in spatial domain
+    :param canvas: size of entire simulation region
+    :return: (np.array, np.array), frequency-space sample point frequencies.
+    """
+    size = int(round(canvas / pixel))
     basic = np.fft.fftshift(np.fft.fftfreq(size, d=pixel))
     freqX = basic.reshape((1, -1)).repeat(size, axis=0)
     freqY = basic.reshape((-1, 1)).repeat(size, axis=1)
@@ -17,14 +24,26 @@ def getFreqs(pixel, canvas):
     assert freqY.shape[0] == size and freqY.shape[1] == size
     return freqX, freqY
 
-def srcPoint(pixel, canvas): 
+
+def srcPoint(pixel, canvas):
     freqX, freqY = getFreqs(pixel, canvas)
     result = (freqX == 0) * (freqY == 0)
     return result.astype(np.double)
 
-def funcPupil(pixel, canvas, na, lam, defocus=None, refract=None): 
-    limit = na / lam
-    freqX, freqY = getFreqs(pixel, canvas)
+
+def funcPupil(pixel, canvas, na, lam, defocus=None, refract=None):
+    """
+    Transfer function of an imaging system with specified numerical aperture and defocus
+    :param pixel: size of 1 pixel in spatial domain
+    :param canvas: size of entire simulation region
+    :param na: Numerical aperture
+    :param lam: Wavelength
+    :param defocus: defocus distance in same units as wavelength
+    :param refract: Don't know what this is. If this is 1, then result is a normal transfer function with defocus
+    :return:
+    """
+    limit = na / lam  # Maximum supported spatial frequency
+    freqX, freqY = getFreqs(pixel, canvas)  # Frequency sample points
     result = np.sqrt(freqX**2 + freqY**2) < limit
     result = result.astype(np.double)
     if not defocus is None: 
@@ -36,7 +55,17 @@ def funcPupil(pixel, canvas, na, lam, defocus=None, refract=None):
         result = result * shift
     return result
 
-def TCC(src, pupil, pixel, canvas, thresh=1.0e-6): 
+
+def TCC(src, pupil, pixel, canvas, thresh=1.0e-6):
+    """
+
+    :param src:
+    :param pupil:
+    :param pixel:
+    :param canvas:
+    :param thresh:
+    :return:
+    """
     size = round(canvas / pixel)
     pupilFFT = np.fft.fftshift(np.fft.fft2(pupil)) # h
     pupilStar = pupilFFT.conj() # h*
@@ -55,18 +84,19 @@ def TCC(src, pupil, pixel, canvas, thresh=1.0e-6):
     print(f"SVD results: {matU.shape, matS.shape, matVT.shape}, weights = {matS}")
     phis = []
     weights = []
-    for idx, weight in enumerate(matS): 
-        if not thresh is None and weight >= thresh: 
+    for idx, weight in enumerate(matS):
+        if not thresh is None and weight >= thresh:
             phis.append(matU[:, idx].reshape(size, size) * (size*size))
             weights.append(matS[idx])
     return phis, weights
 
-def genTCC(pixel : int, 
-           canvas : int , 
-           na : float, 
-           wavelength : int, 
-           defocus : Union[None, List[int]] = None, 
-           thresh : float =1.0e-6):
+
+def genTCC(pixel: int,
+           canvas: int,
+           na: float,
+           wavelength: int,
+           defocus: Union[None, List[int]] = None,
+           thresh: float = 1.0e-6):
     refract = na / SINMAX
     size = canvas//pixel
     if defocus is not None:
@@ -146,14 +176,17 @@ def genTCC(pixel : int,
                 phis[idx] = padding**2 * resize**2 * np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(ffted)))
         return phis, weights
 
-def readTccParaFromDisc(path : str):
+
+def readTccParaFromDisc(path: str):
     with open(path, "rb") as fin:
         phis, weights = pickle.load(fin)
     return phis, weights
 
-def writeTccParaToDisc(phis, weights, path : str):
+
+def writeTccParaToDisc(phis, weights, path: str):
     with open(path, "wb") as fout:
         pickle.dump((phis, weights), fout)
+
 
 if __name__ == "__main__": 
     genTCC(4, 512, 1.35, 193)

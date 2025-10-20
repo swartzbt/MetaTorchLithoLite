@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-from pylitho import Hopkins, Abbe
+from MetaInverseDesign.MetaTorchLithoLite.pylitho import Hopkins, Abbe
 
 if __name__ == "__main__":
 
@@ -11,7 +11,7 @@ if __name__ == "__main__":
     canvas = 512
     size = round(canvas / pixelsize)
 
-    device=torch.device("cpu")
+    device = torch.device("cpu")
 
     sim1 = Hopkins(
         canvas=canvas,
