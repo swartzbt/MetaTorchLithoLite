@@ -59,11 +59,11 @@ def funcPupil(pixel, canvas, na, lam, defocus=None, refract=None):
 def TCC(src, pupil, pixel, canvas, thresh=1.0e-6):
     """
 
-    :param src:
-    :param pupil:
-    :param pixel:
-    :param canvas:
-    :param thresh:
+    :param src: source matrix; intensity of the source in frequency space
+    :param pupil: transfer function of the imaging system (frequency space)
+    :param pixel: size of 1 pixel in spatial domain
+    :param canvas: size of entire simulation region
+    :param thresh: minimum singular value that will be retained
     :return:
     """
     size = round(canvas / pixel)
@@ -72,8 +72,8 @@ def TCC(src, pupil, pixel, canvas, thresh=1.0e-6):
     srcFFT = np.fft.fftshift(np.fft.fft2(src/np.sum(src))) # J
     print(f"Creating big matrix: {pupilStar.shape + pupilStar.shape}")
     w = np.zeros(pupilStar.shape + pupilStar.shape, dtype=np.complex64)
-    for idx in range(pupilStar.shape[0]): 
-        for jdx in range(pupilStar.shape[1]): 
+    for idx in range(pupilStar.shape[0]):
+        for jdx in range(pupilStar.shape[1]):
             srcShifted = np.roll(srcFFT, shift=(idx, jdx), axis=(0, 1))
             srcShifted = np.flip(srcShifted, axis=(0, 1))
             w[idx, jdx] = srcShifted * pupilFFT[idx, jdx] * pupilStar / (np.prod(pupil.shape) * np.prod(src.shape))

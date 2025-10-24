@@ -3,8 +3,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-from pylitho import Hopkins, Abbe
-from pylitho import Design
+from ..pylitho import Hopkins, Abbe
+from ..pylitho import Design
 
 if __name__ == "__main__":
 
